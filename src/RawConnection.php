@@ -23,6 +23,21 @@ class RawConnection {
 	 */
 	private $process;
 
+	/**
+	 * List of created connection to be closed on shutdown by
+	 * RawConnection::closeAll()
+	 *
+	 * @var array $connection_list
+	 */
+	private static $connection_list = array();
+
+	/**
+	 * Shutdown function registered
+	 *
+	 * @var boolean $cleanup_registered
+	 */
+	private static $shutdown_func_registered = false;
+
 	public function __construct($command, $env = array()) {
 		$descriptorSpec = array(
 			0 => array('pipe', 'r'), // child reads from stdin
@@ -43,6 +58,12 @@ class RawConnection {
 				$descriptorSpec, $this->pipes, '/', $env);
 		if (!$this->isValid()) {
 			throw new ConnectionException();
+		}
+
+		self::$connection_list[] = $this;
+		if (!self::$shutdown_func_registered) {
+			register_shutdown_function('\Icewind\SMB\RawConnection::closeAll');
+			self::$shutdown_func_registered = true;
 		}
 	}
 
@@ -137,6 +158,24 @@ class RawConnection {
 			proc_terminate($this->process);
 		}
 		proc_close($this->process);
+
+		$index = array_search($this, self::$connection_list);
+		if ($index !== FALSE) {
+			unset(self::$connection_list[$index]);
+		}
+	}
+
+	/**
+	 * Close all connections
+	 *
+	 * Construtor registers this function with register_shutdown_function()
+	 */
+	public static function closeAll() {
+	foreach(self::$connection_list as &$process) {
+		if ($process) {
+			$process->close();
+			}
+		}
 	}
 
 	public function __destruct() {
