@@ -39,7 +39,8 @@ class RawConnection {
 			'LANG' => Server::LOCALE,
 			'COLUMNS' => 8192 // prevent smbclient from line-wrapping it's output
 		));
-		$this->process = proc_open($command, $descriptorSpec, $this->pipes, '/', $env);
+		$this->process = proc_open('exec ' . $command,
+				$descriptorSpec, $this->pipes, '/', $env);
 		if (!$this->isValid()) {
 			throw new ConnectionException();
 		}
