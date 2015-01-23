@@ -56,19 +56,19 @@ class Connection extends RawConnection {
 	private function checkConnectionError($line) {
 		$line = rtrim($line, ')');
 		if (substr($line, -23) === ErrorCodes::LogonFailure) {
-			throw new AuthenticationException();
+			throw new AuthenticationException($line);
 		}
 		if (substr($line, -26) === ErrorCodes::BadHostName) {
-			throw new InvalidHostException();
+			throw new InvalidHostException($line);
 		}
 		if (substr($line, -22) === ErrorCodes::Unsuccessful) {
-			throw new InvalidHostException();
+			throw new InvalidHostException($line);
 		}
 		if (substr($line, -28) === ErrorCodes::ConnectionRefused) {
-			throw new InvalidHostException();
+			throw new InvalidHostException($line);
 		}
 		if (substr($line, -24) === ErrorCodes::DuplicateName) {
-			throw new InvalidHostException();
+			throw new InvalidHostException($line);
 		}
 	}
 
