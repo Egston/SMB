@@ -67,6 +67,9 @@ class Connection extends RawConnection {
 		if (substr($line, -28) === ErrorCodes::ConnectionRefused) {
 			throw new InvalidHostException();
 		}
+		if (substr($line, -24) === ErrorCodes::DuplicateName) {
+			throw new InvalidHostException();
+		}
 	}
 
 	public function close($terminate = true) {
@@ -75,4 +78,5 @@ class Connection extends RawConnection {
 		}
 		parent::close($terminate);
 	}
+
 }
