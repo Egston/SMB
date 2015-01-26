@@ -1,11 +1,14 @@
 {
-	"name"             : "icewind/smb",
-	"description"      : "php wrapper for smbclient and libsmbclient-php",
+	"name"             : "egston/smb",
+	"description"      : "Egston fork of php wrapper for smbclient and libsmbclient-php",
 	"license"          : "MIT",
 	"authors"          : [
 		{
 			"name" : "Robin Appelman",
 			"email": "icewind@owncloud.com"
+		},
+		{
+			"name" : "Egston"
 		}
 	],
 	"require"          : {
