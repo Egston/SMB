@@ -31,13 +31,6 @@ class RawConnection {
 	 */
 	private static $connection_list = array();
 
-	/**
-	 * Shutdown function registered
-	 *
-	 * @var boolean $cleanup_registered
-	 */
-	private static $shutdown_func_registered = false;
-
 	public function __construct($command, $env = array()) {
 		$descriptorSpec = array(
 			0 => array('pipe', 'r'), // child reads from stdin
@@ -60,11 +53,10 @@ class RawConnection {
 			throw new ConnectionException();
 		}
 
-		self::$connection_list[] = $this;
-		if (!self::$shutdown_func_registered) {
+		if (empty(self::$connection_list)) {
 			register_shutdown_function('\Icewind\SMB\RawConnection::closeAll');
-			self::$shutdown_func_registered = true;
 		}
+		self::$connection_list[] = $this;
 	}
 
 	/**
