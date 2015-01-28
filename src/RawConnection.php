@@ -94,8 +94,14 @@ class RawConnection {
 		$len = fwrite($this->getInputStream(), $input);
 		$flushed = fflush($this->getInputStream());
 
-		if (!$flushed || $len === false || $len !== strlen($input)) {
+		if ($len === false) {
 			throw new ConnectionException('Stream write failed.');
+		}
+		if (!$flushed || $len !== strlen($input)) {
+			throw new ConnectionException(sprintf(
+					'Stream write failed (wrote %d of %d bytes, %s).',
+					$len , strlen($input),
+					$flushed ? 'flushed' : 'flush failed'));
 		}
 	}
 
