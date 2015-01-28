@@ -8,8 +8,15 @@
 namespace Icewind\SMB;
 
 use Icewind\SMB\Exception\ConnectionException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class RawConnection {
+	/**
+	 * @var LoggerInterface $logger
+	 */
+	protected $logger;
+
 	/**
 	 * @var resource[] $pipes
 	 *
@@ -31,14 +38,10 @@ class RawConnection {
 	 */
 	private static $connection_list = array();
 
-	/**
-	 * Shutdown function registered
-	 *
-	 * @var boolean $cleanup_registered
-	 */
-	private static $shutdown_func_registered = false;
-
-	public function __construct($command, $env = array()) {
+	public function __construct($command, $env = array(),
+			LoggerInterface $logger = null
+	) {
+		$this->logger = $logger ? $logger : new NullLogger;
 		$descriptorSpec = array(
 			0 => array('pipe', 'r'), // child reads from stdin
 			1 => array('pipe', 'w'), // child writes to stdout
@@ -60,11 +63,10 @@ class RawConnection {
 			throw new ConnectionException();
 		}
 
-		self::$connection_list[] = $this;
-		if (!self::$shutdown_func_registered) {
+		if (empty(self::$connection_list)) {
 			register_shutdown_function('\Icewind\SMB\RawConnection::closeAll');
-			self::$shutdown_func_registered = true;
 		}
+		self::$connection_list[] = $this;
 	}
 
 	/**
@@ -87,8 +89,14 @@ class RawConnection {
 	 * @param string $input
 	 */
 	public function write($input) {
-		fwrite($this->getInputStream(), $input);
-		fflush($this->getInputStream());
+		$this->logger->debug('write: ' . $input);
+
+		$len = fwrite($this->getInputStream(), $input);
+		$flushed = fflush($this->getInputStream());
+
+		if (!$flushed || $len === false || $len !== strlen($input)) {
+			throw new ConnectionException('Stream write failed.');
+		}
 	}
 
 	/**
@@ -97,7 +105,19 @@ class RawConnection {
 	 * @return string
 	 */
 	public function readLine() {
-		return stream_get_line($this->getOutputStream(), 4086, "\n");
+		/*
+		 * A read from sbmclient sometimes fails so many times, how many
+		 * characters have been written to it. This was observed on CentOS 6
+		 * smbclient version 3.6.23-12.el6.
+		 * Make sure we skip these failures.
+		 */
+		do {
+			$line = stream_get_line($this->getOutputStream(), 4086, "\n");
+			$meta = stream_get_meta_data($this->getOutputStream());
+			$this->logger->debug('readLine: ' . $line);
+		} while ($line === false && $meta['unread_bytes'] > 0);
+
+		return $line;
 	}
 
 	/**

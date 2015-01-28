@@ -15,6 +15,8 @@ use Icewind\SMB\Exception\InvalidTypeException;
 use Icewind\SMB\Exception\NotEmptyException;
 use Icewind\SMB\Exception\NotFoundException;
 use Icewind\Streams\CallbackWrapper;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class Share implements IShare {
 	/**
@@ -37,13 +39,20 @@ class Share implements IShare {
 	 */
 	protected $parser;
 
+	/**
+	 * @var LoggerInterface $logger
+	 */
+	protected $logger;
+
 	private $serverTimezone;
 
 	/**
 	 * @param Server $server
 	 * @param string $name
+	 * @param LoggerInterface $logger
 	 */
-	public function __construct($server, $name) {
+	public function __construct($server, $name, LoggerInterface $logger = null) {
+		$this->logger = $logger ? $logger : new NullLogger;
 		$this->server = $server;
 		$this->name = $name;
 		$this->parser = new Parser($this->server->getTimeZone());
@@ -63,7 +72,7 @@ class Share implements IShare {
 			$this->server->getHost(),
 			$this->name
 		);
-		$this->connection = new Connection($command);
+		$this->connection = new Connection($command, array(), $this->logger);
 		$this->connection->writeAuthentication($this->server->getUser(), $this->server->getPassword());
 		if (!$this->connection->isValid()) {
 			throw new ConnectionException();
@@ -246,7 +255,7 @@ class Share implements IShare {
 			$this->name,
 			$source
 		);
-		$connection = new Connection($command);
+		$connection = new Connection($command, array(), $this->logger);
 		$connection->writeAuthentication($this->server->getUser(), $this->server->getPassword());
 		$fh = $connection->getFileOutputStream();
 		stream_context_set_option($fh, 'file', 'connection', $connection);
@@ -274,7 +283,7 @@ class Share implements IShare {
 			$this->name,
 			$target
 		);
-		$connection = new RawConnection($command);
+		$connection = new RawConnection($command, array(), $this->logger);
 		$connection->writeAuthentication($this->server->getUser(), $this->server->getPassword());
 		$fh = $connection->getFileInputStream();
 

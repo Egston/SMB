@@ -16,7 +16,11 @@
 		"icewind/streams": "0.2.x"
 	},
 	"require-dev": {
-		"satooshi/php-coveralls"  : "dev-master"
+		"satooshi/php-coveralls"  : "dev-master",
+		"psr/log": "1.*@dev"
+	},
+	"suggests": {
+		"psr/log-implementation": "^1.0.0"
 	},
 	"autoload"         : {
 		"psr-4": {

@@ -56,7 +56,9 @@ class Parser {
 				case ErrorCodes::NotADirectory:
 					throw new InvalidTypeException($path);
 				default:
-					$message = 'Unknown error (' . $error . ')';
+					$mesage = sprintf(
+								'Unknown error (%s). Unexpected output `%s`',
+								$error, var_export($output, true));
 					if ($path) {
 						$message .= ' for ' . $path;
 					}

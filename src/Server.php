@@ -9,6 +9,8 @@ namespace Icewind\SMB;
 
 use Icewind\SMB\Exception\AuthenticationException;
 use Icewind\SMB\Exception\InvalidHostException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class Server {
 	const CLIENT = 'smbclient';
@@ -30,6 +32,11 @@ class Server {
 	protected $password;
 
 	/**
+	 * @var LoggerInterface $logger
+	 */
+	protected $logger;
+
+	/**
 	 * Check if the smbclient php extension is available
 	 *
 	 * @return bool
@@ -42,8 +49,12 @@ class Server {
 	 * @param string $host
 	 * @param string $user
 	 * @param string $password
+	 * @param LoggerInterface $logger
 	 */
-	public function __construct($host, $user, $password) {
+	public function __construct($host, $user, $password,
+			LoggerInterface $logger = null
+	) {
+		$this->logger = $logger ? $logger : new NullLogger;
 		$this->host = $host;
 		$this->user = $user;
 		$this->password = $password;
@@ -86,7 +97,7 @@ class Server {
 	public function listShares() {
 		$command = Server::CLIENT . ' --authentication-file=/proc/self/fd/3' .
 			' -gL ' . escapeshellarg($this->getHost());
-		$connection = new RawConnection($command);
+		$connection = new RawConnection($command, array(), $this->logger);
 		$connection->writeAuthentication($this->getUser(), $this->getPassword());
 		$output = $connection->readAll();
 
@@ -128,7 +139,7 @@ class Server {
 	 * @return \Icewind\SMB\IShare
 	 */
 	public function getShare($name) {
-		return new Share($this, $name);
+		return new Share($this, $name, $this->logger);
 	}
 
 	/**
