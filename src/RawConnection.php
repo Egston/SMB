@@ -64,9 +64,13 @@ class RawConnection {
 		}
 
 		if (empty(self::$connection_list)) {
+			$this->logger->debug('Registering shutdown callback.');
 			register_shutdown_function('\Icewind\SMB\RawConnection::closeAll');
 		}
 		self::$connection_list[] = $this;
+		$this->logger->debug(sprintf(
+				'Creating connection (count: %d)',
+				count(self::$connection_list)));
 	}
 
 	/**
@@ -189,6 +193,10 @@ class RawConnection {
 		if ($index !== FALSE) {
 			unset(self::$connection_list[$index]);
 		}
+
+		$this->logger->debug(sprintf(
+				'Connection closed (remaining: %d)',
+				count(self::$connection_list)));
 	}
 
 	/**
@@ -197,9 +205,11 @@ class RawConnection {
 	 * Construtor registers this function with register_shutdown_function()
 	 */
 	public static function closeAll() {
-	foreach(self::$connection_list as &$process) {
-		if ($process) {
-			$process->close();
+		foreach(self::$connection_list as &$connection) {
+			if ($connection) {
+				try {
+					$connection->close();
+				} catch (\Exception $e) {}
 			}
 		}
 	}
