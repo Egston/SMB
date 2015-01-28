@@ -39,9 +39,12 @@ class Connection extends RawConnection {
 		$output = array();
 		$line = $this->readLine();
 		$length = mb_strlen(self::DELIMITER);
-		while (mb_substr($line, 0, $length) !== self::DELIMITER) { //next prompt functions as delimiter
+		while (mb_substr($line, 0, $length) !== self::DELIMITER  //next prompt functions as delimiter
+		) {
 			$output[] .= $line;
 			$line = $this->readLine();
+			// smbclient sometimes stops output until enter is pressed
+			parent::write(PHP_EOL);
 		}
 		return $output;
 	}

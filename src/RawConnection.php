@@ -89,7 +89,18 @@ class RawConnection {
 	 * @return string
 	 */
 	public function readLine() {
-		return stream_get_line($this->getOutputStream(), 4086, "\n");
+		/*
+		 * A read from sbmclient sometimes fails so many times, how many
+		 * characters have been written to it. This was observed on CentOS 6
+		 * smbclient version 3.6.23-12.el6.
+		 * Make sure we skip these failures.
+		 */
+		do {
+			$line = stream_get_line($this->getOutputStream(), 4086, "\n");
+			$meta = stream_get_meta_data($this->getOutputStream());
+		} while ($line === false && $meta['unread_bytes'] > 0);
+
+		return $line;
 	}
 
 	/**
