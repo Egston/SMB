@@ -8,8 +8,15 @@
 namespace Icewind\SMB;
 
 use Icewind\SMB\Exception\ConnectionException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class RawConnection {
+	/**
+	 * @var LoggerInterface $logger
+	 */
+	protected $logger;
+
 	/**
 	 * @var resource[] $pipes
 	 *
@@ -31,7 +38,10 @@ class RawConnection {
 	 */
 	private static $connection_list = array();
 
-	public function __construct($command, $env = array()) {
+	public function __construct($command, $env = array(),
+			LoggerInterface $logger = null
+	) {
+		$this->logger = $logger ? $logger : new NullLogger;
 		$descriptorSpec = array(
 			0 => array('pipe', 'r'), // child reads from stdin
 			1 => array('pipe', 'w'), // child writes to stdout
@@ -79,8 +89,14 @@ class RawConnection {
 	 * @param string $input
 	 */
 	public function write($input) {
-		fwrite($this->getInputStream(), $input);
-		fflush($this->getInputStream());
+		$this->logger->debug('write: ' . $input);
+
+		$len = fwrite($this->getInputStream(), $input);
+		$flushed = fflush($this->getInputStream());
+
+		if (!$flushed || $len === false || $len !== strlen($input)) {
+			throw new ConnectionException('Stream write failed.');
+		}
 	}
 
 	/**
@@ -98,6 +114,7 @@ class RawConnection {
 		do {
 			$line = stream_get_line($this->getOutputStream(), 4086, "\n");
 			$meta = stream_get_meta_data($this->getOutputStream());
+			$this->logger->debug('readLine: ' . $line);
 		} while ($line === false && $meta['unread_bytes'] > 0);
 
 		return $line;
