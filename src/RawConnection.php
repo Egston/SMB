@@ -78,6 +78,9 @@ class RawConnection {
 		$this->logger->debug(sprintf(
 				'Creating connection (count: %d)',
 				count(self::$connection_list)));
+
+		stream_set_blocking($this->getErrorStream(), 0);
+		$this->readStdErr();
 	}
 
 	/**
@@ -98,12 +101,15 @@ class RawConnection {
 	 * send input to the process
 	 *
 	 * @param string $input
+	 * @throws Icewind\SMB\Exception\ConnectionException on write error
 	 */
 	public function write($input) {
 		$this->logger->debug('write: ' . $input);
 
+		$this->readStdErr();
 		$len = fwrite($this->getInputStream(), $input);
 		$flushed = fflush($this->getInputStream());
+		$this->readStdErr();
 
 		if ($len === false) {
 			throw new ConnectionException('Stream write failed.');
@@ -114,6 +120,25 @@ class RawConnection {
 					$len , strlen($input),
 					$flushed ? 'flushed' : 'flush failed'));
 		}
+	}
+
+	/**
+	 * non-blocking read stderr of the process
+	 *
+	 * @return array of read lines
+	 */
+	public function readStdErr() {
+		$buff = stream_get_contents($this->getErrorStream());
+		$lines = array();
+		if ($buff !== "") {
+			foreach (explode("\n", $buff) as $line) {
+				if (trim($line) !== '') {
+					$lines[] = $line;
+					$this->logger->warning('stderr: ' . $line);
+				}
+			}
+		}
+		return $lines;
 	}
 
 	/**
@@ -128,6 +153,7 @@ class RawConnection {
 		$buff = '';
 		$start = microtime(true);
 		do {
+			$this->readStdErr();
 			$read = array($fh);
 			$write = null;
 			$except = null;
@@ -135,10 +161,12 @@ class RawConnection {
 			) {
 				$buff .= fgets($fh);
 			} else {
+				$this->readStdErr();
 				throw new ConnectionException(
 						sprintf('Read timeout [%sms]', $this->timeout_ms));
 			}
 		} while (!(feof($fh) || mb_substr($buff, -1) == "\n"));
+		$this->readStdErr();
 		$duration = microtime(true) - $start;
 		$line = trim($buff);
 
@@ -187,16 +215,18 @@ class RawConnection {
 	}
 
 	public function writeAuthentication($user, $password) {
+		$fh = $this->getAuthStream();
+		$success = false;
 		$auth = ($password === false)
 			? "username=$user"
 			: "username=$user\npassword=$password";
 
-		if (fwrite($this->getAuthStream(), $auth) === false) {
-			fclose($this->getAuthStream());
-			return false;
+		if (fwrite($fh, $auth) !== false && fflush($fh)) {
+			$success = true;
 		}
-		fclose($this->getAuthStream());
-		return true;
+		fclose($fh);
+		$this->readStdErr();
+		return $success;
 	}
 
 	public function close($terminate = true) {
@@ -207,6 +237,7 @@ class RawConnection {
 			proc_terminate($this->process);
 		}
 		proc_close($this->process);
+		$this->readStdErr();
 
 		$index = array_search($this, self::$connection_list);
 		if ($index !== FALSE) {
