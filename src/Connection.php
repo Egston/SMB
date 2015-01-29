@@ -24,17 +24,15 @@ class Connection extends RawConnection {
 	}
 
 	/**
-	 * get all unprocessed output from smbclient until the next prompt
+	 * get all unprocessed output from smbclient until the first prompt
 	 *
 	 * @throws ConnectionException
-	 * @return string
+	 * @return array of lines
 	 */
-	public function read() {
+	public function readUntilPrompt() {
 		if (!$this->isValid()) {
 			throw new ConnectionException();
 		}
-		$line = $this->readLine(); //first line is prompt
-		$this->checkConnectionError($line);
 
 		$output = array();
 		$line = $this->readLine();
@@ -43,6 +41,7 @@ class Connection extends RawConnection {
 		) {
 			$output[] .= $line;
 			$line = $this->readLine();
+			$this->checkConnectionError($line);
 		}
 		return $output;
 	}
