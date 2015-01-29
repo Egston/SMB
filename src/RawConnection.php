@@ -17,7 +17,7 @@ class RawConnection {
 	 *
 	 * @var integer
 	 */
-	public $timeout_ms = 10 * 1000000;
+	public $timeout = 10;
 
 	/**
 	 * @var LoggerInterface $logger
@@ -157,13 +157,13 @@ class RawConnection {
 			$read = array($fh);
 			$write = null;
 			$except = null;
-			if (stream_select($read, $write, $except, 0, $this->timeout_ms) > 0
+			if (stream_select($read, $write, $except, $this->timeout) > 0
 			) {
 				$buff .= fgets($fh);
 			} else {
 				$this->readStdErr();
 				throw new ConnectionException(
-						sprintf('Read timeout [%sms]', $this->timeout_ms));
+						sprintf('Read timeout [%ss]', $this->timeout));
 			}
 		} while (!(feof($fh) || mb_substr($buff, -1) == "\n"));
 		$this->readStdErr();
