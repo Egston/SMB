@@ -76,7 +76,7 @@ class RawConnection {
 		}
 		self::$connection_list[] = $this;
 		$this->logger->debug(sprintf(
-				'Creating connection (count: %d)',
+				'Created new connection (count: %d)',
 				count(self::$connection_list)));
 
 		stream_set_blocking($this->getErrorStream(), 0);
