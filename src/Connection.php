@@ -43,8 +43,6 @@ class Connection extends RawConnection {
 		) {
 			$output[] .= $line;
 			$line = $this->readLine();
-			// smbclient sometimes stops output until enter is pressed
-			parent::write(PHP_EOL);
 		}
 		return $output;
 	}

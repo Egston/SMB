@@ -13,6 +13,13 @@ use Psr\Log\NullLogger;
 
 class RawConnection {
 	/**
+	 * Connection timeout in seconds
+	 *
+	 * @var integer
+	 */
+	public $timeout_ms = 10 * 1000000;
+
+	/**
 	 * @var LoggerInterface $logger
 	 */
 	protected $logger;
@@ -112,22 +119,34 @@ class RawConnection {
 	/**
 	 * read a line of output
 	 *
+	 * @throws Icewind\SMB\Exception\ConnectionException on timeout
 	 * @return string
 	 */
 	public function readLine() {
-		/*
-		 * A read from sbmclient sometimes fails so many times, how many
-		 * characters have been written to it. This was observed on CentOS 6
-		 * smbclient version 3.6.23-12.el6.
-		 * Make sure we skip these failures.
-		 */
+		$fh = $this->getOutputStream();
+
+		$buff = '';
+		$start = microtime(true);
 		do {
-			$line = stream_get_line($this->getOutputStream(), 4086, "\n");
-			$meta = stream_get_meta_data($this->getOutputStream());
-			$this->logger->debug('readLine: ' . $line);
-		} while ($line === false && $meta['unread_bytes'] > 0);
+			$read = array($fh);
+			$write = null;
+			$except = null;
+			if (stream_select($read, $write, $except, 0, $this->timeout_ms) > 0
+			) {
+				$buff .= fgets($fh);
+			} else {
+				throw new ConnectionException(
+						sprintf('Read timeout [%sms]', $this->timeout_ms));
+			}
+		} while (!(feof($fh) || mb_substr($buff, -1) == "\n"));
+		$duration = microtime(true) - $start;
+		$line = trim($buff);
+
+		$this->logger->debug(
+				sprintf('read [%4.3fs] %s', $duration, $line));
 
 		return $line;
+
 	}
 
 	/**
