@@ -332,7 +332,8 @@ class Share implements IShare {
 	protected function execute($command) {
 		$this->connect();
 		$this->connection->write($command . PHP_EOL);
-		$output = $this->connection->read();
+		$this->connection->readUntilPrompt(); // first line is prompt
+		$output = $this->connection->readUntilPrompt(); // until next prompt
 		return $output;
 	}
 
