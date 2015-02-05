@@ -233,11 +233,16 @@ class RawConnection {
 		if (!is_resource($this->process)) {
 			return;
 		}
+		$this->readStdErr();
+		foreach ($this->pipes as $fh) {
+			if (is_resource($fh)) {
+				fclose($fh);
+			}
+		}
 		if ($terminate) {
 			proc_terminate($this->process);
 		}
 		proc_close($this->process);
-		$this->readStdErr();
 
 		$index = array_search($this, self::$connection_list);
 		if ($index !== FALSE) {
