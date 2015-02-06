@@ -136,6 +136,8 @@ class Share implements IShare {
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\AlreadyExistsException
+	 * @throws \Icewind\SMB\Exception\AccessDeniedException
+	 * @throws \Icewind\SMB\Exception\Exception
 	 */
 	public function mkdir($path) {
 		$this->simpleCommand('mkdir', $path);
@@ -148,6 +150,8 @@ class Share implements IShare {
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\InvalidTypeException
+	 * @throws \Icewind\SMB\Exception\AccessDeniedException
+	 * @throws \Icewind\SMB\Exception\Exception
 	 */
 	public function rmdir($path) {
 		$this->simpleCommand('rmdir', $path);
@@ -160,6 +164,8 @@ class Share implements IShare {
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\InvalidTypeException
+	 * @throws \Icewind\SMB\Exception\AccessDeniedException
+	 * @throws \Icewind\SMB\Exception\Exception
 	 */
 	public function del($path) {
 		//del return a file not found error when trying to delete a folder
@@ -187,6 +193,8 @@ class Share implements IShare {
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\AlreadyExistsException
+	 * @throws \Icewind\SMB\Exception\AccessDeniedException
+	 * @throws \Icewind\SMB\Exception\Exception
 	 */
 	public function rename($from, $to) {
 		$path1 = $this->escapePath($from);
@@ -204,6 +212,8 @@ class Share implements IShare {
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\InvalidTypeException
+	 * @throws \Icewind\SMB\Exception\AccessDeniedException
+	 * @throws \Icewind\SMB\Exception\Exception
 	 */
 	public function put($source, $target) {
 		$path1 = $this->escapeLocalPath($source); //first path is local, needs different escaping
@@ -220,6 +230,8 @@ class Share implements IShare {
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\InvalidTypeException
+	 * @throws \Icewind\SMB\Exception\AccessDeniedException
+	 * @throws \Icewind\SMB\Exception\Exception
 	 */
 	public function get($source, $target) {
 		$path1 = $this->escapePath($source);
@@ -236,6 +248,8 @@ class Share implements IShare {
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\InvalidTypeException
+	 * @throws \Icewind\SMB\Exception\AccessDeniedException
+	 * @throws \Icewind\SMB\Exception\Exception
 	 */
 	public function read($source) {
 		$source = $this->escapePath($source);
@@ -264,6 +278,8 @@ class Share implements IShare {
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\InvalidTypeException
+	 * @throws \Icewind\SMB\Exception\AccessDeniedException
+	 * @throws \Icewind\SMB\Exception\Exception
 	 */
 	public function write($target) {
 		$target = $this->escapePath($target);
@@ -291,6 +307,10 @@ class Share implements IShare {
 	/**
 	 * @param string $path
 	 * @param int $mode a combination of FileInfo::MODE_READONLY, FileInfo::MODE_ARCHIVE, FileInfo::MODE_SYSTEM and FileInfo::MODE_HIDDEN, FileInfo::NORMAL
+	 *
+	 * @throws \Icewind\SMB\Exception\NotFoundException
+	 * @throws \Icewind\SMB\Exception\AccessDeniedException
+	 * @throws \Icewind\SMB\Exception\Exception
 	 */
 	public function setMode($path, $mode) {
 		$modeString = '';
