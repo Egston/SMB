@@ -92,7 +92,7 @@ class Share implements IShare {
 		$path = $this->escapePath($path);
 		$cmd = $command . ' ' . $path;
 		$output = $this->execute($cmd);
-		return $this->parseOutput($output, $path);
+		$this->parseOutput($output, $path);
 	}
 
 	/**
@@ -133,33 +133,30 @@ class Share implements IShare {
 	 * Create a folder on the share
 	 *
 	 * @param string $path
-	 * @return bool
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\AlreadyExistsException
 	 */
 	public function mkdir($path) {
-		return $this->simpleCommand('mkdir', $path);
+		$this->simpleCommand('mkdir', $path);
 	}
 
 	/**
 	 * Remove a folder on the share
 	 *
 	 * @param string $path
-	 * @return bool
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\InvalidTypeException
 	 */
 	public function rmdir($path) {
-		return $this->simpleCommand('rmdir', $path);
+		$this->simpleCommand('rmdir', $path);
 	}
 
 	/**
 	 * Delete a file on the share
 	 *
 	 * @param string $path
-	 * @return bool
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\InvalidTypeException
@@ -168,7 +165,7 @@ class Share implements IShare {
 		//del return a file not found error when trying to delete a folder
 		//we catch it so we can check if $path doesn't exist or is of invalid type
 		try {
-			return $this->simpleCommand('del', $path);
+			$this->simpleCommand('del', $path);
 		} catch (NotFoundException $e) {
 			//no need to do anything with the result, we just check if this throws the not found error
 			try {
@@ -187,7 +184,6 @@ class Share implements IShare {
 	 *
 	 * @param string $from
 	 * @param string $to
-	 * @return bool
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\AlreadyExistsException
@@ -197,7 +193,7 @@ class Share implements IShare {
 		$path2 = $this->escapePath($to);
 		$cmd = 'rename ' . $path1 . ' ' . $path2;
 		$output = $this->execute($cmd);
-		return $this->parseOutput($output, $to);
+		$this->parseOutput($output, $to);
 	}
 
 	/**
@@ -205,7 +201,6 @@ class Share implements IShare {
 	 *
 	 * @param string $source local file
 	 * @param string $target remove file
-	 * @return bool
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\InvalidTypeException
@@ -214,7 +209,7 @@ class Share implements IShare {
 		$path1 = $this->escapeLocalPath($source); //first path is local, needs different escaping
 		$path2 = $this->escapePath($target);
 		$output = $this->execute('put ' . $path1 . ' ' . $path2);
-		return $this->parseOutput($output, $target);
+		$this->parseOutput($output, $target);
 	}
 
 	/**
@@ -222,7 +217,6 @@ class Share implements IShare {
 	 *
 	 * @param string $source remove file
 	 * @param string $target local file
-	 * @return bool
 	 *
 	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\InvalidTypeException
@@ -231,7 +225,7 @@ class Share implements IShare {
 		$path1 = $this->escapePath($source);
 		$path2 = $this->escapeLocalPath($target); //second path is local, needs different escaping
 		$output = $this->execute('get ' . $path1 . ' ' . $path2);
-		return $this->parseOutput($output, $source);
+		$this->parseOutput($output, $source);
 	}
 
 	/**
@@ -297,7 +291,6 @@ class Share implements IShare {
 	/**
 	 * @param string $path
 	 * @param int $mode a combination of FileInfo::MODE_READONLY, FileInfo::MODE_ARCHIVE, FileInfo::MODE_SYSTEM and FileInfo::MODE_HIDDEN, FileInfo::NORMAL
-	 * @return mixed
 	 */
 	public function setMode($path, $mode) {
 		$modeString = '';
@@ -322,7 +315,7 @@ class Share implements IShare {
 		// then set the modes we want
 		$cmd = 'setmode ' . $path . ' ' . $modeString;
 		$output = $this->execute($cmd);
-		return $this->parseOutput($output, $path);
+		$this->parseOutput($output, $path);
 	}
 
 	/**
@@ -343,13 +336,12 @@ class Share implements IShare {
 	 * @param string[] $lines
 	 * @param string $path
 	 *
-	 * @throws NotFoundException
+	 * @throws \Icewind\SMB\Exception\NotFoundException
 	 * @throws \Icewind\SMB\Exception\AlreadyExistsException
 	 * @throws \Icewind\SMB\Exception\AccessDeniedException
 	 * @throws \Icewind\SMB\Exception\NotEmptyException
 	 * @throws \Icewind\SMB\Exception\InvalidTypeException
 	 * @throws \Icewind\SMB\Exception\Exception
-	 * @return bool
 	 */
 	protected function parseOutput($lines, $path = '') {
 		$this->parser->checkForError($lines, $path);
